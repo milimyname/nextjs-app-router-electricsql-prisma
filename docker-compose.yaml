@@ -1,0 +1,69 @@
+# version: "3.3"
+# name: "electric_quickstart"
+
+# services:
+#   postgres:
+#     image: postgres:16-alpine
+#     environment:
+#       POSTGRES_DB: electric
+#       POSTGRES_USER: postgres
+#       POSTGRES_PASSWORD: password
+#     ports:
+#       - 54321:5432
+#     tmpfs:
+#       - /var/lib/postgresql/data
+#       - /tmp
+#     command:
+#       - -c
+#       - listen_addresses=*
+#       - -c
+#       - wal_level=logical
+
+#   electric:
+#     image: electricsql/electric
+#     environment:
+#       DATABASE_URL: postgresql://postgres:password@postgres:5432/electric
+#       ELECTRIC_WRITE_TO_PG_MODE: direct_writes
+#       PG_PROXY_PASSWORD: proxy_password
+#       AUTH_MODE: insecure
+#       DATABASE_REQUIRE_SSL: false
+#     ports:
+#       - "5133:5133"
+#       - "5433:5433"
+#       - "65432:65432"
+#     depends_on:
+#       - postgres
+
+version: "3.1"
+
+volumes:
+  pg_data:
+
+services:
+  pg:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_PASSWORD: pg_password
+    command:
+      - -c
+      - wal_level=logical
+    ports:
+      - 5432:5432
+    restart: always
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  electric:
+    image: electricsql/electric
+    depends_on:
+      - pg
+    environment:
+      DATABASE_URL: postgresql://postgres:pg_password@pg/postgres
+      DATABASE_REQUIRE_SSL: false
+      ELECTRIC_WRITE_TO_PG_MODE: direct_writes
+      PG_PROXY_PASSWORD: proxy_password
+      AUTH_MODE: insecure
+    ports:
+      - 5133:5133
+      - 65432:65432
+    restart: always
